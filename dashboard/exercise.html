@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Exercise — Frontend Interview Prep</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-tsx.min.js"></script>
+  <!-- CodeMirror 5 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/theme/material-darker.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/javascript/javascript.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/jsx/jsx.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/xml/xml.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/edit/closebrackets.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/edit/matchbrackets.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/comment/comment.min.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            border: 'hsl(240 3.7% 15.9%)',
+            background: 'hsl(240 10% 3.9%)',
+            foreground: 'hsl(0 0% 98%)',
+            card: 'hsl(240 10% 5.5%)',
+            'card-foreground': 'hsl(0 0% 98%)',
+            muted: 'hsl(240 3.7% 15.9%)',
+            'muted-foreground': 'hsl(240 5% 64.9%)',
+            primary: 'hsl(0 0% 98%)',
+            'primary-foreground': 'hsl(240 5.9% 10%)',
+          },
+        }
+      }
+    }
+  </script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; }
+    body {
+      background: hsl(240 10% 3.9%);
+      color: hsl(0 0% 98%);
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 1rem;
+    }
+
+    /* ── Layout ── */
+    .app { display: flex; flex-direction: column; height: 100vh; }
+    .topbar { flex-shrink: 0; border-bottom: 1px solid hsl(240 3.7% 15.9%); padding: 0.5rem 1rem; display: flex; align-items: center; gap: 1rem; background: hsl(240 10% 4.5%); }
+    .panels { flex: 1; display: flex; min-height: 0; }
+    .panel { flex: 1; display: flex; flex-direction: column; min-width: 0; border-right: 1px solid hsl(240 3.7% 15.9%); }
+    .panel:last-child { border-right: none; }
+    .panel-header {
+      flex-shrink: 0;
+      padding: 0.5rem 1rem;
+      background: hsl(240 10% 5.5%);
+      border-bottom: 1px solid hsl(240 3.7% 15.9%);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: hsl(240 5% 64.9%);
+    }
+    .panel-body { flex: 1; overflow: auto; padding: 1rem; }
+
+    /* ── Tabs ── */
+    .tab-bar { display: flex; gap: 0; }
+    .tab {
+      padding: 0.5rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: hsl(240 5% 55%);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+      background: none;
+      border-top: none;
+      border-left: none;
+      border-right: none;
+    }
+    .tab:hover { color: hsl(0 0% 85%); }
+    .tab.active { color: hsl(0 0% 98%); border-bottom-color: hsl(0 0% 98%); }
+
+    /* ── Markdown styles ── */
+    .markdown { line-height: 1.7; font-size: 0.95rem; }
+    .markdown h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .markdown h2 { font-size: 1.2rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.5rem; color: hsl(0 0% 90%); }
+    .markdown h3 { font-size: 1.05rem; font-weight: 600; margin-top: 1.25rem; margin-bottom: 0.4rem; }
+    .markdown p { margin-bottom: 0.75rem; color: hsl(240 5% 80%); }
+    .markdown ul, .markdown ol { padding-left: 1.5rem; margin-bottom: 0.75rem; color: hsl(240 5% 80%); }
+    .markdown li { margin-bottom: 0.35rem; }
+    .markdown code {
+      background: hsl(240 3.7% 15.9%);
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      font-size: 0.875rem;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+    }
+    .markdown pre {
+      background: hsl(240 10% 6%) !important;
+      border: 1px solid hsl(240 3.7% 15.9%);
+      border-radius: 8px;
+      padding: 1rem;
+      overflow-x: auto;
+      margin-bottom: 1rem;
+    }
+    .markdown pre code {
+      background: none;
+      padding: 0;
+      font-size: 0.85rem;
+    }
+    .markdown blockquote {
+      border-left: 3px solid hsl(240 3.7% 25%);
+      padding-left: 1rem;
+      color: hsl(240 5% 60%);
+      margin-bottom: 0.75rem;
+    }
+    .markdown a { color: hsl(217 91% 65%); text-decoration: underline; }
+    .markdown a:hover { color: hsl(217 91% 75%); }
+    .markdown hr { border: none; border-top: 1px solid hsl(240 3.7% 15.9%); margin: 1.5rem 0; }
+
+    /* ── Code panel ── */
+    .code-container { font-size: 0.9rem; }
+    .code-container pre[class*="language-"] {
+      background: transparent !important;
+      margin: 0;
+      padding: 0;
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+    .code-container code[class*="language-"] {
+      font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+      font-size: 0.9rem;
+    }
+    .line-numbers {
+      counter-reset: line;
+    }
+    .line-numbers .line::before {
+      counter-increment: line;
+      content: counter(line);
+      display: inline-block;
+      width: 3rem;
+      text-align: right;
+      margin-right: 1rem;
+      color: hsl(240 5% 30%);
+      font-size: 0.8rem;
+    }
+    .line-numbers .line {
+      display: block;
+    }
+
+    /* ── Test results ── */
+    .test-item {
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+      margin-bottom: 0.25rem;
+    }
+    .test-item.pass { background: hsl(142 76% 8%); }
+    .test-item.fail { background: hsl(0 62.8% 8%); }
+    .test-icon-pass { color: hsl(142 76% 55%); font-weight: bold; flex-shrink: 0; }
+    .test-icon-fail { color: hsl(0 62.8% 60%); font-weight: bold; flex-shrink: 0; }
+    .test-name { color: hsl(0 0% 85%); }
+    .failure-msg {
+      margin-top: 0.25rem;
+      font-size: 0.8rem;
+      color: hsl(0 62.8% 65%);
+      font-family: 'SF Mono', monospace;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    .summary-bar {
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+    .summary-pass { background: hsl(142 76% 12%); color: hsl(142 76% 70%); border: 1px solid hsl(142 76% 20%); }
+    .summary-fail { background: hsl(0 62.8% 12%); color: hsl(0 62.8% 70%); border: 1px solid hsl(0 62.8% 20%); }
+    .summary-idle { background: hsl(240 3.7% 12%); color: hsl(240 5% 55%); border: 1px solid hsl(240 3.7% 20%); }
+
+    /* ── Spinner ── */
+    .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid hsl(240 3.7% 25%); border-top-color: hsl(0 0% 98%); border-radius: 50%; animation: spin 0.6s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Nav arrows ── */
+    .nav-btn {
+      background: hsl(240 3.7% 12%);
+      border: 1px solid hsl(240 3.7% 20%);
+      color: hsl(0 0% 80%);
+      padding: 0.3rem 0.6rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: all 0.15s;
+    }
+    .nav-btn:hover { background: hsl(240 3.7% 18%); color: hsl(0 0% 98%); }
+    .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: hsl(240 3.7% 20%); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: hsl(240 3.7% 30%); }
+
+    /* ── CodeMirror overrides ── */
+    .CodeMirror {
+      height: 100% !important;
+      background: transparent !important;
+      color: hsl(0 0% 90%) !important;
+      font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace !important;
+      font-size: 0.9rem !important;
+      line-height: 1.65 !important;
+    }
+    .CodeMirror-gutters {
+      background: transparent !important;
+      border-right: 1px solid hsl(240 3.7% 15.9%) !important;
+    }
+    .CodeMirror-linenumber {
+      color: hsl(240 5% 30%) !important;
+      font-size: 0.8rem !important;
+    }
+    .CodeMirror-cursor { border-left-color: hsl(0 0% 80%) !important; }
+    .CodeMirror-selected { background: hsl(217 91% 25% / 0.35) !important; }
+    .CodeMirror-focused .CodeMirror-selected { background: hsl(217 91% 30% / 0.4) !important; }
+    .CodeMirror-matchingbracket { color: hsl(142 76% 55%) !important; text-decoration: underline; }
+    .cm-s-material-darker .CodeMirror-activeline-background { background: hsl(240 3.7% 10%) !important; }
+    #code-panel .CodeMirror { padding-top: 0.25rem; }
+
+    /* ── Save button styles ── */
+    .save-btn {
+      background: hsl(142 76% 36%);
+      color: white;
+      border: none;
+      padding: 0.4rem 1rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .save-btn:hover { background: hsl(142 76% 42%); }
+    .save-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .save-btn.dirty { background: hsl(38 92% 50%); }
+    .save-btn.dirty:hover { background: hsl(38 92% 58%); }
+    .save-toast {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      padding: 0.6rem 1.2rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      z-index: 1000;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.25s ease;
+      pointer-events: none;
+    }
+    .save-toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .save-toast.success { background: hsl(142 76% 20%); color: hsl(142 76% 75%); border: 1px solid hsl(142 76% 30%); }
+    .save-toast.error { background: hsl(0 62.8% 15%); color: hsl(0 62.8% 70%); border: 1px solid hsl(0 62.8% 30%); }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- Top Bar -->
+    <div class="topbar">
+      <a href="/" style="color: hsl(240 5% 55%); text-decoration: none; font-size: 0.85rem;">← Dashboard</a>
+      <button id="prev-btn" class="nav-btn" onclick="navigateExercise(-1)">◀ Prev</button>
+      <div style="flex:1; text-align:center;">
+        <span id="exercise-title" style="font-weight: 700; font-size: 1.1rem;"></span>
+      </div>
+      <button id="next-btn" class="nav-btn" onclick="navigateExercise(1)">Next ▶</button>
+      <button id="save-btn" class="save-btn" onclick="saveFile()" disabled>
+        💾 Save <kbd style="font-size:0.7rem;opacity:0.7;margin-left:0.25rem;">⌘S</kbd>
+      </button>
+      <button id="run-btn" onclick="runTests()" style="background: hsl(0 0% 98%); color: hsl(240 5.9% 10%); border: none; padding: 0.4rem 1rem; border-radius: 6px; font-size: 0.85rem; font-weight: 600; cursor: pointer;">
+        ▶ Run Tests
+      </button>
+    </div>
+
+    <!-- 3-Panel Layout -->
+    <div class="panels">
+
+      <!-- Panel 1: Description -->
+      <div class="panel" style="flex: 0 0 30%; max-width: 30%;">
+        <div class="panel-header">📋 Description</div>
+        <div class="panel-body markdown" id="description-panel">
+          <div style="color: hsl(240 5% 45%);">Loading…</div>
+        </div>
+      </div>
+
+      <!-- Panel 2: Code -->
+      <div class="panel" style="flex: 0 0 42%; max-width: 42%;">
+        <div class="panel-header">
+          <div class="tab-bar">
+            <button class="tab active" data-tab="source" onclick="switchCodeTab('source')">Solution</button>
+            <button class="tab" data-tab="test" onclick="switchCodeTab('test')">Tests</button>
+          </div>
+          <span id="filename-label" style="margin-left: auto; font-weight: 400; font-size: 0.8rem; opacity: 0.6;"></span>
+        </div>
+        <div class="panel-body code-container" id="code-panel" style="padding: 0.75rem 0;">
+          <div style="padding: 1rem; color: hsl(240 5% 45%);">Loading…</div>
+        </div>
+      </div>
+
+      <!-- Panel 3: Test Results -->
+      <div class="panel" style="flex: 0 0 28%; max-width: 28%;">
+        <div class="panel-header">🧪 Test Results</div>
+        <div class="panel-body" id="results-panel">
+          <div class="summary-bar summary-idle">Click "Run Tests" to execute</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Toast notification -->
+  <div id="save-toast" class="save-toast"></div>
+
+  <script>
+    // ═══════════════════════════
+    // STATE
+    // ═══════════════════════════
+    let exercises = [];
+    let currentExercise = '';
+    let currentTab = 'source';
+    let codeCache = {};
+    let savedCache = {};  // tracks last-saved content per tab
+    let isRunning = false;
+    let editor = null;    // CodeMirror instance
+    let isDirty = false;
+    let isSaving = false;
+    let pollTimer = null;    // polling interval for file changes
+    let ignoreNextPoll = false;  // skip one poll cycle after our own save
+
+    // ═══════════════════════════
+    // INIT
+    // ═══════════════════════════
+    async function init() {
+      // Get exercise name from URL
+      const pathParts = window.location.pathname.split('/');
+      currentExercise = pathParts[pathParts.length - 1];
+
+      // Load exercise list for navigation
+      try {
+        const res = await fetch('/api/exercises');
+        exercises = await res.json();
+      } catch { exercises = []; }
+
+      updateNav();
+      loadExercise(currentExercise);
+
+      // Global keyboard shortcut: Cmd+S / Ctrl+S to save
+      document.addEventListener('keydown', (e) => {
+        if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+          e.preventDefault();
+          saveFile();
+        }
+      });
+    }
+
+    function updateNav() {
+      const idx = exercises.findIndex(e => e.name === currentExercise);
+      document.getElementById('prev-btn').disabled = idx <= 0;
+      document.getElementById('next-btn').disabled = idx >= exercises.length - 1;
+    }
+
+    function navigateExercise(dir) {
+      const idx = exercises.findIndex(e => e.name === currentExercise);
+      const next = exercises[idx + dir];
+      if (next) {
+        window.location.href = '/exercise/' + next.name;
+      }
+    }
+
+    // ═══════════════════════════
+    // LOAD EXERCISE
+    // ═══════════════════════════
+    async function loadExercise(name) {
+      // Title
+      const num = name.split('-')[0];
+      const title = name.replace(/^\d+-/, '').replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+      document.getElementById('exercise-title').textContent = `#${num} — ${title}`;
+      document.title = `${name} — Frontend Interview Prep`;
+
+      // Load all content in parallel
+      const [readme, source, test] = await Promise.all([
+        fetchText(`/api/exercise/${name}/readme`),
+        fetchText(`/api/exercise/${name}/source`),
+        fetchText(`/api/exercise/${name}/test`),
+      ]);
+
+      codeCache = { source: source || '// No source file found', test: test || '// No test file found' };
+      savedCache = { source: codeCache.source, test: codeCache.test };
+
+      // Render description
+      if (readme) {
+        document.getElementById('description-panel').innerHTML = marked.parse(readme);
+      } else {
+        document.getElementById('description-panel').innerHTML = '<p style="color: hsl(240 5% 45%);">No README found.</p>';
+      }
+
+      // Render code
+      renderCode(currentTab);
+
+      // Reset test results
+      document.getElementById('results-panel').innerHTML = '<div class="summary-bar summary-idle">Click "▶ Run Tests" to execute</div>';
+
+      // Start watching for external file changes
+      startWatching(name);
+    }
+
+    async function fetchText(url) {
+      try {
+        const res = await fetch(url);
+        if (!res.ok) return null;
+        return await res.text();
+      } catch { return null; }
+    }
+
+    // ═══════════════════════════
+    // CODE TABS
+    // ═══════════════════════════
+    function switchCodeTab(tab) {
+      // Save current editor content back to cache before switching
+      if (editor && currentTab === 'source') {
+        codeCache.source = editor.getValue();
+      }
+      currentTab = tab;
+      document.querySelectorAll('.tab').forEach(t => {
+        t.classList.toggle('active', t.dataset.tab === tab);
+      });
+      renderCode(tab);
+    }
+
+    function renderCode(tab) {
+      const code = codeCache[tab] || '';
+      const isTsx = code.includes('tsx') || code.includes('React') || code.includes('jsx');
+
+      // Find the exercise info for filename
+      const ex = exercises.find(e => e.name === currentExercise);
+      let filename = tab === 'source' ? (ex?.source || 'index.ts') : (ex?.test || 'index.test.ts');
+      document.getElementById('filename-label').textContent = filename;
+
+      // Destroy previous editor
+      if (editor) {
+        editor.toTextArea();
+        editor = null;
+      }
+
+      const panel = document.getElementById('code-panel');
+
+      if (tab === 'source') {
+        // ── Editable CodeMirror editor for source ──
+        panel.innerHTML = '<textarea id="cm-editor"></textarea>';
+        panel.style.padding = '0';
+        const textarea = document.getElementById('cm-editor');
+        const cmMode = isTsx ? 'text/typescript-jsx' : 'text/typescript';
+
+        editor = CodeMirror.fromTextArea(textarea, {
+          value: code,
+          mode: cmMode,
+          theme: 'material-darker',
+          lineNumbers: true,
+          matchBrackets: true,
+          autoCloseBrackets: true,
+          indentUnit: 2,
+          tabSize: 2,
+          indentWithTabs: false,
+          lineWrapping: false,
+          extraKeys: {
+            'Cmd-S': () => saveFile(),
+            'Ctrl-S': () => saveFile(),
+            'Cmd-/': 'toggleComment',
+            'Ctrl-/': 'toggleComment',
+            'Tab': (cm) => {
+              if (cm.somethingSelected()) {
+                cm.indentSelection('add');
+              } else {
+                cm.replaceSelection('  ', 'end');
+              }
+            },
+          },
+        });
+        editor.setValue(code);
+
+        // Track changes for dirty state
+        editor.on('change', () => {
+          const current = editor.getValue();
+          codeCache.source = current;
+          const dirty = current !== savedCache.source;
+          setDirty(dirty);
+        });
+
+        // Focus the editor
+        setTimeout(() => editor.refresh(), 10);
+
+        // Update save button state
+        setDirty(code !== savedCache.source);
+      } else {
+        // ── Read-only Prism view for tests ──
+        panel.style.padding = '0.75rem 0';
+        const lang = isTsx ? 'tsx' : 'typescript';
+        const highlighted = Prism.highlight(code, Prism.languages[lang] || Prism.languages.typescript, lang);
+        const highlightedLines = highlighted.split('\n');
+
+        const html = highlightedLines.map((line, i) => {
+          const lineNum = `<span style="display:inline-block;width:3rem;text-align:right;margin-right:1rem;color:hsl(240 5% 30%);font-size:0.8rem;user-select:none;">${i + 1}</span>`;
+          return `<div style="padding: 0 1rem;">${lineNum}${line || ' '}</div>`;
+        }).join('');
+
+        panel.innerHTML = `<pre style="margin:0;background:transparent;overflow-x:auto;"><code class="language-${lang}" style="font-family:'SF Mono','Fira Code','Cascadia Code',monospace;font-size:0.9rem;line-height:1.65;">${html}</code></pre>`;
+
+        // Hide save button when viewing tests
+        setDirty(false);
+      }
+
+      // Update save button visibility
+      const saveBtn = document.getElementById('save-btn');
+      saveBtn.style.display = tab === 'source' ? 'flex' : 'none';
+    }
+
+    // ═══════════════════════════
+    // DIRTY STATE & SAVE
+    // ═══════════════════════════
+    function setDirty(dirty) {
+      isDirty = dirty;
+      const btn = document.getElementById('save-btn');
+      btn.disabled = !dirty || isSaving;
+      btn.classList.toggle('dirty', dirty);
+      // Update title indicator
+      const baseTitle = document.title.replace(/^● /, '');
+      document.title = dirty ? `● ${baseTitle}` : baseTitle;
+    }
+
+    async function saveFile() {
+      if (!isDirty || isSaving || currentTab !== 'source') return;
+      isSaving = true;
+      const btn = document.getElementById('save-btn');
+      btn.innerHTML = '<span class="spinner"></span> Saving…';
+      btn.disabled = true;
+
+      const content = editor ? editor.getValue() : codeCache.source;
+
+      // Tell the poller to ignore the next cycle (it's our own save)
+      ignoreNextPoll = true;
+
+      try {
+        const res = await fetch(`/api/exercise/${currentExercise}/source`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'text/plain' },
+          body: content,
+        });
+        const data = await res.json();
+
+        if (data.ok) {
+          savedCache.source = content;
+          setDirty(false);
+          showToast('✓ File saved', 'success');
+        } else {
+          showToast('Save failed: ' + (data.error || 'Unknown error'), 'error');
+        }
+      } catch (err) {
+        showToast('Save failed: ' + err.message, 'error');
+      }
+
+      btn.innerHTML = '💾 Save <kbd style="font-size:0.7rem;opacity:0.7;margin-left:0.25rem;">⌘S</kbd>';
+      isSaving = false;
+      setDirty(editor ? editor.getValue() !== savedCache.source : false);
+    }
+
+    function showToast(message, type) {
+      const toast = document.getElementById('save-toast');
+      toast.textContent = message;
+      toast.className = `save-toast ${type}`;
+      // Force reflow then show
+      toast.offsetHeight;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2500);
+    }
+
+    // ═══════════════════════════
+    // FILE POLLING (checks disk every 1.5s)
+    // ═══════════════════════════
+    function startWatching(exerciseName) {
+      // Stop previous polling
+      if (pollTimer) {
+        clearInterval(pollTimer);
+        pollTimer = null;
+      }
+
+      pollTimer = setInterval(async () => {
+        // Skip poll right after our own save
+        if (ignoreNextPoll) {
+          ignoreNextPoll = false;
+          return;
+        }
+
+        try {
+          const diskSource = await fetchText(`/api/exercise/${exerciseName}/source`);
+          if (diskSource !== null && diskSource !== savedCache.source) {
+            handleExternalFileChange('source', diskSource);
+          }
+
+          const diskTest = await fetchText(`/api/exercise/${exerciseName}/test`);
+          if (diskTest !== null && diskTest !== savedCache.test) {
+            handleExternalFileChange('test', diskTest);
+          }
+        } catch {
+          // Network error, skip this cycle
+        }
+      }, 1500);
+    }
+
+    function handleExternalFileChange(type, content) {
+      if (type === 'source') {
+        // Update savedCache to reflect what's on disk
+        savedCache.source = content;
+
+        if (currentTab === 'source' && editor) {
+          // If user hasn't made local changes, update the editor silently
+          if (!isDirty) {
+            // Preserve cursor position
+            const cursor = editor.getCursor();
+            const scrollInfo = editor.getScrollInfo();
+            editor.setValue(content);
+            editor.setCursor(cursor);
+            editor.scrollTo(scrollInfo.left, scrollInfo.top);
+            codeCache.source = content;
+            setDirty(false);
+            showToast('↻ File updated from disk', 'success');
+          } else {
+            // User has unsaved changes — just notify
+            showToast('⚠ File changed externally (you have unsaved edits)', 'error');
+          }
+        } else {
+          // Not viewing source tab — just update cache
+          codeCache.source = content;
+        }
+      } else if (type === 'test') {
+        // Update test cache and re-render if viewing tests tab
+        codeCache.test = content;
+        savedCache.test = content;
+        if (currentTab === 'test') {
+          renderCode('test');
+          showToast('↻ Test file updated', 'success');
+        }
+      }
+    }
+
+    // ═══════════════════════════
+    // TEST RUNNER
+    // ═══════════════════════════
+    async function runTests() {
+      if (isRunning) return;
+
+      // Auto-save before running tests if dirty
+      if (isDirty && currentTab === 'source') {
+        await saveFile();
+      }
+
+      isRunning = true;
+      const btn = document.getElementById('run-btn');
+      btn.innerHTML = '<span class="spinner"></span> Running…';
+      btn.disabled = true;
+
+      document.getElementById('results-panel').innerHTML = `
+        <div class="summary-bar summary-idle" style="display:flex;align-items:center;gap:0.5rem;">
+          <span class="spinner"></span> Running tests…
+        </div>
+      `;
+
+      try {
+        const res = await fetch(`/api/exercise/${currentExercise}/run`);
+        const data = await res.json();
+        renderResults(data);
+      } catch (err) {
+        document.getElementById('results-panel').innerHTML = `
+          <div class="summary-bar summary-fail">Error: ${escapeHtml(err.message)}</div>
+        `;
+      }
+
+      btn.innerHTML = '▶ Run Tests';
+      btn.disabled = false;
+      isRunning = false;
+    }
+
+    function renderResults(data) {
+      if (data.error) {
+        document.getElementById('results-panel').innerHTML = `
+          <div class="summary-bar summary-fail">Error: ${escapeHtml(data.error)}</div>
+        `;
+        return;
+      }
+
+      const summaryClass = data.status === 'pass' ? 'summary-pass' : 'summary-fail';
+      const summaryIcon = data.status === 'pass' ? '✅' : '❌';
+      const summaryText = data.status === 'pass'
+        ? `${summaryIcon} All ${data.total} tests passing!`
+        : `${summaryIcon} ${data.passed}/${data.total} tests passing`;
+
+      const testsHtml = (data.tests || []).map(t => {
+        const isPassing = t.status === 'passed';
+        const itemClass = isPassing ? 'pass' : 'fail';
+        const iconClass = isPassing ? 'test-icon-pass' : 'test-icon-fail';
+        const icon = isPassing ? '✓' : '✗';
+
+        let failureHtml = '';
+        if (!isPassing && t.failureMessages?.length) {
+          const msg = t.failureMessages.join('\n').slice(0, 500);
+          failureHtml = `<div class="failure-msg">${escapeHtml(msg)}</div>`;
+        }
+
+        // Clean up test name - remove the describe prefix
+        const displayName = t.name.replace(/^[\w\s]+>\s*/, '');
+
+        return `
+          <div class="test-item ${itemClass}">
+            <span class="${iconClass}">${icon}</span>
+            <div>
+              <div class="test-name">${escapeHtml(displayName)}</div>
+              ${failureHtml}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('results-panel').innerHTML = `
+        <div class="summary-bar ${summaryClass}">${summaryText}</div>
+        <div>${testsHtml}</div>
+      `;
+    }
+
+    function escapeHtml(str) {
+      return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    init();
+  </script>
+</body>
+</html>

@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Frontend Interview Prep — Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            border: 'hsl(240 3.7% 15.9%)',
+            input: 'hsl(240 3.7% 15.9%)',
+            ring: 'hsl(240 4.9% 83.9%)',
+            background: 'hsl(240 10% 3.9%)',
+            foreground: 'hsl(0 0% 98%)',
+            card: 'hsl(240 10% 3.9%)',
+            'card-foreground': 'hsl(0 0% 98%)',
+            primary: 'hsl(0 0% 98%)',
+            'primary-foreground': 'hsl(240 5.9% 10%)',
+            secondary: 'hsl(240 3.7% 15.9%)',
+            'secondary-foreground': 'hsl(0 0% 98%)',
+            muted: 'hsl(240 3.7% 15.9%)',
+            'muted-foreground': 'hsl(240 5% 64.9%)',
+            accent: 'hsl(240 3.7% 15.9%)',
+            'accent-foreground': 'hsl(0 0% 98%)',
+            destructive: 'hsl(0 62.8% 30.6%)',
+            success: 'hsl(142 76% 36%)',
+            'success-foreground': 'hsl(144 80% 90%)',
+          },
+          borderRadius: {
+            lg: '0.5rem',
+            md: 'calc(0.5rem - 2px)',
+            sm: 'calc(0.5rem - 4px)',
+          },
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background: hsl(240 10% 3.9%); color: hsl(0 0% 98%); font-family: system-ui, -apple-system, sans-serif; font-size: 1.1rem; }
+    .card { background: hsl(240 10% 5.5%); border: 1px solid hsl(240 3.7% 15.9%); border-radius: 0.75rem; }
+    .badge { display: inline-flex; align-items: center; border-radius: 9999px; padding: 0.2rem 0.75rem; font-size: 0.85rem; font-weight: 600; }
+    .badge-pass { background: hsl(142 76% 15%); color: hsl(142 76% 73%); border: 1px solid hsl(142 76% 25%); }
+    .badge-fail { background: hsl(0 62.8% 15%); color: hsl(0 62.8% 70%); border: 1px solid hsl(0 62.8% 25%); }
+    .badge-pending { background: hsl(40 80% 15%); color: hsl(40 80% 70%); border: 1px solid hsl(40 80% 25%); }
+    .progress-bar { background: hsl(240 3.7% 15.9%); border-radius: 9999px; height: 8px; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 9999px; transition: width 0.5s ease; }
+    .progress-fill-green { background: hsl(142 76% 36%); }
+    .progress-fill-blue { background: hsl(217 91% 60%); }
+    .accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
+    .accordion-content.open { max-height: 5000px; }
+    .accordion-trigger:hover { background: hsl(240 3.7% 10%); }
+    .checkbox-custom { appearance: none; width: 1rem; height: 1rem; border: 2px solid hsl(240 5% 64.9%); border-radius: 3px; background: transparent; cursor: pointer; position: relative; flex-shrink: 0; }
+    .checkbox-custom:checked { background: hsl(0 0% 98%); border-color: hsl(0 0% 98%); }
+    .checkbox-custom:checked::after { content: '✓'; position: absolute; top: -2px; left: 1px; font-size: 11px; color: hsl(240 5.9% 10%); font-weight: bold; }
+    .link-icon { opacity: 0.6; transition: opacity 0.15s; text-decoration: none; }
+    .link-icon:hover { opacity: 1; }
+    .test-detail { font-size: 0.875rem; }
+    .test-pass::before { content: '✓'; color: hsl(142 76% 50%); margin-right: 4px; font-weight: bold; }
+    .test-fail::before { content: '✗'; color: hsl(0 62.8% 55%); margin-right: 4px; font-weight: bold; }
+    .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid hsl(240 3.7% 25%); border-top-color: hsl(0 0% 98%); border-radius: 50%; animation: spin 0.6s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .reading-done { text-decoration: line-through; opacity: 0.5; }
+  </style>
+</head>
+<body class="min-h-screen p-6 max-w-4xl mx-auto">
+
+  <!-- Header -->
+  <header class="mb-8">
+    <h1 class="text-4xl font-bold tracking-tight mb-1">🎓 Frontend Interview Prep</h1>
+    <p class="text-muted-foreground text-base">Master the concepts. Pass the tests. Ace the interview.</p>
+  </header>
+
+  <!-- Overall Progress Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+    <div class="card p-4">
+      <div class="text-sm text-muted-foreground uppercase tracking-wider mb-1">Exercises</div>
+      <div class="flex items-center gap-3">
+        <span id="exercise-count" class="text-3xl font-bold">—</span>
+        <span class="text-muted-foreground text-base">/ 10 passing</span>
+      </div>
+      <div class="progress-bar mt-2"><div id="exercise-progress" class="progress-fill progress-fill-green" style="width:0%"></div></div>
+    </div>
+    <div class="card p-4">
+      <div class="text-sm text-muted-foreground uppercase tracking-wider mb-1">Reading</div>
+      <div class="flex items-center gap-3">
+        <span id="reading-count" class="text-3xl font-bold">0</span>
+        <span id="reading-total" class="text-muted-foreground text-base">/ 0 completed</span>
+      </div>
+      <div class="progress-bar mt-2"><div id="reading-progress" class="progress-fill progress-fill-blue" style="width:0%"></div></div>
+    </div>
+    <div class="card p-4 flex flex-col justify-between">
+      <div class="text-sm text-muted-foreground uppercase tracking-wider mb-1">Actions</div>
+      <button id="run-tests-btn" onclick="runTests()" class="mt-1 w-full px-4 py-2.5 bg-primary text-primary-foreground rounded-md text-base font-medium hover:opacity-90 transition-opacity">
+        ▶ Run Tests
+      </button>
+    </div>
+  </div>
+
+  <!-- Module List -->
+  <div id="modules-container" class="space-y-4"></div>
+
+  <script>
+    // ═══════════════════════════════════════════════
+    // MODULE DATA — all concepts, links, and exercises
+    // ═══════════════════════════════════════════════
+    const MODULES = [
+      {
+        id: 'mod1',
+        num: 1,
+        title: 'The "Timer & Async" Master',
+        emoji: '⏱️',
+        exercises: ['01-debounce'],
+        concepts: [
+          {
+            id: 'mod1-closures',
+            name: 'Closures',
+            desc: 'An inner function retains access to its outer function\'s variables even after the outer function has returned. This is the mechanism that lets the debounce function "remember" the timeoutId.',
+            links: [
+              { type: 'read', label: 'javascript.info — Closures', url: 'https://javascript.info/closure' },
+              { type: 'video', label: 'Fireship — Closures in 100 Seconds', url: 'https://www.youtube.com/watch?v=vKJpN5FAeF4' },
+            ]
+          },
+          {
+            id: 'mod1-this',
+            name: 'this & apply/call/bind',
+            desc: '`this` is determined by how a function is called, not where it\'s defined. `apply()` lets you invoke a function while explicitly setting `this`.',
+            links: [
+              { type: 'read', label: 'MDN — this', url: 'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/this' },
+              { type: 'read', label: 'MDN — Function.prototype.apply()', url: 'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/apply' },
+              { type: 'video', label: 'Web Dev Simplified — this in 8 Min', url: 'https://www.youtube.com/watch?v=YOlr79NaAtQ' },
+            ]
+          },
+          {
+            id: 'mod1-timers',
+            name: 'setTimeout & clearTimeout',
+            desc: '`setTimeout` schedules a callback after a delay. `clearTimeout` cancels it. These are Web APIs, not part of the JS engine.',
+            links: [
+              { type: 'read', label: 'MDN — setTimeout', url: 'https://developer.mozilla.org/en-US/docs/Web/API/setTimeout' },
+              { type: 'read', label: 'javascript.info — Scheduling', url: 'https://javascript.info/settimeout-setinterval' },
+            ]
+          },
+          {
+            id: 'mod1-eventloop',
+            name: 'The Event Loop',
+            desc: 'JS is single-threaded. The Event Loop coordinates the Call Stack, Web APIs, Macrotask Queue, and Microtask Queue.',
+            links: [
+              { type: 'read', label: 'javascript.info — Event Loop', url: 'https://javascript.info/event-loop' },
+              { type: 'video', label: 'Philip Roberts — What the heck is the event loop?', url: 'https://www.youtube.com/watch?v=8aGhZQkoFbQ' },
+              { type: 'video', label: 'Lydia Hallie — JS Visualized: Event Loop', url: 'https://www.youtube.com/watch?v=eiC58R16hb8' },
+            ]
+          },
+          {
+            id: 'mod1-rest-spread',
+            name: 'Rest Parameters & Spread Syntax',
+            desc: 'Rest (`...args`) collects arguments into an array. Spread expands an array into individual arguments.',
+            links: [
+              { type: 'read', label: 'MDN — Rest parameters', url: 'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/rest_parameters' },
+              { type: 'read', label: 'MDN — Spread syntax', url: 'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax' },
+            ]
+          },
+          {
+            id: 'mod1-useeffect',
+            name: 'React useEffect & Cleanup',
+            desc: 'useEffect runs side effects after render. Its return function is the cleanup — called before re-run or unmount. Critical for clearing timers.',
+            links: [
+              { type: 'read', label: 'React docs — Synchronizing with Effects', url: 'https://react.dev/learn/synchronizing-with-effects' },
+              { type: 'video', label: 'Jack Herrington — Mastering useEffect', url: 'https://www.youtube.com/watch?v=dH6i3GurZW8' },
+            ]
+          },
+        ]
+      },
+      {
+        id: 'mod2',
+        num: 2,
+        title: 'The "Closure & Cache" Master',
+        emoji: '🧠',
+        exercises: ['02-memoize'],
+        concepts: [
+          {
+            id: 'mod2-closures-cache',
+            name: 'Closures for Caching',
+            desc: 'The memoized function forms a closure over the cache variable, keeping it alive between calls.',
+            links: [
+              { type: 'read', label: 'javascript.info — Closures', url: 'https://javascript.info/closure' },
+              { type: 'video', label: 'Akshay Saini — Closures in JS', url: 'https://www.youtube.com/watch?v=qikxEIxsXco' },
+            ]
+          },
+          {
+            id: 'mod2-map-weakmap',
+            name: 'Map vs WeakMap vs Objects',
+            desc: 'Objects coerce keys to strings. Map preserves key types. WeakMap allows garbage collection when references are lost.',
+            links: [
+              { type: 'read', label: 'MDN — Map', url: 'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map' },
+              { type: 'read', label: 'MDN — WeakMap', url: 'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakMap' },
+              { type: 'video', label: 'Web Dev Simplified — Map vs Object', url: 'https://www.youtube.com/watch?v=hubQQ3F337A' },
+            ]
+          },
+          {
+            id: 'mod2-referential',
+            name: 'Referential Equality (===)',
+            desc: 'Primitives are compared by value, objects by memory reference. {a:1} === {a:1} is false.',
+            links: [
+              { type: 'read', label: 'javascript.info — Object References', url: 'https://javascript.info/object-copy#comparison-by-reference' },
+              { type: 'video', label: 'Web Dev Simplified — Reference vs Value', url: 'https://www.youtube.com/watch?v=-hBJz2PPIVE' },
+            ]
+          },
+          {
+            id: 'mod2-hof',
+            name: 'Higher-Order Functions',
+            desc: 'Functions that take other functions as arguments or return functions. memoize is a classic HOF.',
+            links: [
+              { type: 'read', label: 'MDN — First-class Functions', url: 'https://developer.mozilla.org/en-US/docs/Glossary/First-class_Function' },
+            ]
+          },
+          {
+            id: 'mod2-useref',
+            name: 'useRef vs useState',
+            desc: 'useState triggers re-renders. useRef holds a mutable .current value that persists across renders without re-rendering.',
+            links: [
+              { type: 'read', label: 'React docs — useRef', url: 'https://react.dev/reference/react/useRef' },
+              { type: 'video', label: 'Web Dev Simplified — useRef in 11 Min', url: 'https://www.youtube.com/watch?v=t2ypzz6gJm0' },
+            ]
+          },
+        ]
+      },
+      {
+        id: 'mod3',
+        num: 3,
+        title: 'The "Pub/Sub" Architecture',
+        emoji: '📡',
+        exercises: ['03-event-emitter'],
+        concepts: [
+          {
+            id: 'mod3-observer',
+            name: 'Observer / Pub-Sub Pattern',
+            desc: 'Publishers emit named events, subscribers register callbacks. Neither side needs to know about the other.',
+            links: [
+              { type: 'read', label: 'Refactoring Guru — Observer Pattern', url: 'https://refactoring.guru/design-patterns/observer' },
+              { type: 'video', label: 'Fireship — 10 Design Patterns', url: 'https://www.youtube.com/watch?v=tv-_1er1mWI' },
+            ]
+          },
+          {
+            id: 'mod3-classes',
+            name: 'JavaScript Classes',
+            desc: 'ES6 class syntax is sugar over prototypal inheritance. constructor initializes, methods go on the prototype.',
+            links: [
+              { type: 'read', label: 'javascript.info — Classes', url: 'https://javascript.info/class' },
+              { type: 'video', label: 'Web Dev Simplified — JS Classes', url: 'https://www.youtube.com/watch?v=2ZphE5HGQaA' },
+            ]
+          },
+          {
+            id: 'mod3-map-set',
+            name: 'Map and Set Data Structures',
+            desc: 'Map stores key-value pairs. Set stores unique values. Ideal for event registries.',
+            links: [
+              { type: 'read', label: 'MDN — Map', url: 'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map' },
+              { type: 'read', label: 'MDN — Set', url: 'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set' },
+            ]
+          },
+          {
+            id: 'mod3-bubbling',
+            name: 'DOM Event Bubbling & Capturing',
+            desc: 'Events travel down (capturing) then up (bubbling). Most listeners fire during bubbling.',
+            links: [
+              { type: 'read', label: 'javascript.info — Bubbling and Capturing', url: 'https://javascript.info/bubbling-and-capturing' },
+              { type: 'video', label: 'Web Dev Simplified — Event Bubbling', url: 'https://www.youtube.com/watch?v=XF1_MlZ5l6M' },
+            ]
+          },
+          {
+            id: 'mod3-memory',
+            name: 'Memory Leaks from Event Listeners',
+            desc: 'Every addEventListener creates a reference. Without removeEventListener on cleanup, those persist causing leaks.',
+            links: [
+              { type: 'read', label: 'web.dev — Memory Leaks', url: 'https://web.dev/articles/fix-memory-problems' },
+              { type: 'video', label: 'Jack Herrington — React Memory Leaks', url: 'https://www.youtube.com/watch?v=ZKJh7mDBVS8' },
+            ]
+          },
+        ]
+      },
+      {
+        id: 'mod4',
+        num: 4,
+        title: 'The "Reference & Recursion" Master',
+        emoji: '🧬',
+        exercises: ['04-deep-clone'],
+        concepts: [
+          {
+            id: 'mod4-primitive-ref',
+            name: 'Primitive vs Reference Types',
+            desc: 'Primitives are stored by value. Objects/arrays are stored as references (pointers). Copying a reference shares the data.',
+            links: [
+              { type: 'read', label: 'javascript.info — Object References', url: 'https://javascript.info/object-copy' },
+              { type: 'video', label: 'Web Dev Simplified — Reference vs Value', url: 'https://www.youtube.com/watch?v=-hBJz2PPIVE' },
+            ]
+          },
+          {
+            id: 'mod4-shallow-deep',
+            name: 'Shallow Copy vs Deep Copy',
+            desc: 'Shallow copy (spread, Object.assign) duplicates top level only. Deep copy recursively duplicates everything.',
+            links: [
+              { type: 'read', label: 'MDN — Shallow Copy', url: 'https://developer.mozilla.org/en-US/docs/Glossary/Shallow_copy' },
+              { type: 'read', label: 'MDN — Deep Copy', url: 'https://developer.mozilla.org/en-US/docs/Glossary/Deep_copy' },
+            ]
+          },
+          {
+            id: 'mod4-recursion',
+            name: 'Recursion & The Call Stack',
+            desc: 'A recursive function calls itself with a smaller sub-problem until a base case. Each call adds a frame to the Call Stack.',
+            links: [
+              { type: 'read', label: 'javascript.info — Recursion', url: 'https://javascript.info/recursion' },
+              { type: 'video', label: 'Fireship — Recursion in 100 Seconds', url: 'https://www.youtube.com/watch?v=rf60MejMz3E' },
+            ]
+          },
+          {
+            id: 'mod4-typeof',
+            name: 'typeof & instanceof',
+            desc: 'typeof identifies primitives (but returns "object" for null). instanceof checks the prototype chain for constructors like Date, RegExp.',
+            links: [
+              { type: 'read', label: 'MDN — typeof', url: 'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/typeof' },
+              { type: 'read', label: 'MDN — instanceof', url: 'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/instanceof' },
+            ]
+          },
+          {
+            id: 'mod4-weakmap',
+            name: 'WeakMap for Circular References',
+            desc: 'WeakMap tracks visited objects to break infinite loops. Weak references allow garbage collection after cloning.',
+            links: [
+              { type: 'read', label: 'MDN — WeakMap', url: 'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakMap' },
+              { type: 'read', label: 'javascript.info — WeakMap and WeakSet', url: 'https://javascript.info/weakmap-weakset' },
+            ]
+          },
+          {
+            id: 'mod4-json-limits',
+            name: 'for...in, hasOwnProperty & JSON limitations',
+            desc: 'for...in iterates all enumerable props (including inherited). JSON.stringify drops undefined, functions, Date, RegExp, and crashes on circular refs.',
+            links: [
+              { type: 'read', label: 'MDN — for...in', url: 'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for...in' },
+              { type: 'video', label: 'Web Dev Simplified — Structured Clone', url: 'https://www.youtube.com/watch?v=dSiAQOaCHWE' },
+            ]
+          },
+        ]
+      },
+      {
+        id: 'mod5',
+        num: 5,
+        title: 'The "Functional Pipeline" Master',
+        emoji: '⚙️',
+        exercises: ['05-reduce', '06-curry'],
+        concepts: [
+          {
+            id: 'mod5-hof',
+            name: 'Higher-Order Functions',
+            desc: 'Functions that accept or return other functions (map, filter, reduce). The pattern both reduce and curry rely on.',
+            links: [
+              { type: 'read', label: 'Eloquent JS — Higher-Order Functions', url: 'https://eloquentjavascript.net/05_higher_order.html' },
+              { type: 'video', label: 'Fun Fun Function — Higher-order Functions', url: 'https://www.youtube.com/watch?v=BMUiFMZr7vk' },
+            ]
+          },
+          {
+            id: 'mod5-accumulator',
+            name: 'The Accumulator Pattern',
+            desc: 'A loop carrying forward a running result. reduce formalizes this: callback receives accumulated value + current element.',
+            links: [
+              { type: 'read', label: 'MDN — Array.prototype.reduce()', url: 'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/reduce' },
+              { type: 'video', label: 'Web Dev Simplified — Reduce in 10 Min', url: 'https://www.youtube.com/watch?v=s1XVfm5mIuU' },
+            ]
+          },
+          {
+            id: 'mod5-prototype',
+            name: 'Array.prototype & Prototype Chain',
+            desc: 'Every array inherits methods from Array.prototype. Adding myReduce to it makes all arrays gain access.',
+            links: [
+              { type: 'read', label: 'javascript.info — Prototypes', url: 'https://javascript.info/prototype-inheritance' },
+              { type: 'read', label: 'MDN — Prototype chain', url: 'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Inheritance_and_the_prototype_chain' },
+            ]
+          },
+          {
+            id: 'mod5-arguments',
+            name: 'The arguments Object',
+            desc: 'A legacy array-like object in non-arrow functions containing all passed arguments. Used in reduce to detect if initialValue was provided.',
+            links: [
+              { type: 'read', label: 'MDN — arguments', url: 'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/arguments' },
+            ]
+          },
+          {
+            id: 'mod5-arity',
+            name: 'Function Arity (fn.length)',
+            desc: 'fn.length returns the number of formal parameters. Currying uses this to know when enough arguments are collected.',
+            links: [
+              { type: 'read', label: 'MDN — Function.length', url: 'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/length' },
+            ]
+          },
+          {
+            id: 'mod5-currying',
+            name: 'Partial Application & Currying',
+            desc: 'Partial application fixes some arguments. Currying is a special case where each call takes one argument. Closures accumulate args.',
+            links: [
+              { type: 'read', label: 'javascript.info — Currying', url: 'https://javascript.info/currying-partials' },
+              { type: 'video', label: 'Fun Fun Function — Currying', url: 'https://www.youtube.com/watch?v=iZLP4qOwY8I' },
+            ]
+          },
+        ]
+      },
+      {
+        id: 'mod6',
+        num: 6,
+        title: 'The "Async Orchestrator"',
+        emoji: '⚡',
+        exercises: ['07-promise-all'],
+        concepts: [
+          {
+            id: 'mod6-promises',
+            name: 'Promises',
+            desc: 'An object representing eventual completion or failure. Three states: pending, fulfilled, rejected.',
+            links: [
+              { type: 'read', label: 'javascript.info — Promises', url: 'https://javascript.info/promise-basics' },
+              { type: 'video', label: 'Web Dev Simplified — Promises in 10 Min', url: 'https://www.youtube.com/watch?v=DHvZLI7Db8E' },
+            ]
+          },
+          {
+            id: 'mod6-resolve',
+            name: 'Promise.resolve() & Wrapping Values',
+            desc: 'Wraps any value in a resolved promise. Crucial because Promise.all input may contain non-promises.',
+            links: [
+              { type: 'read', label: 'MDN — Promise.resolve()', url: 'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/resolve' },
+            ]
+          },
+          {
+            id: 'mod6-microtask',
+            name: 'Microtask vs Macrotask Queue',
+            desc: 'Promise callbacks (.then) are microtasks, which execute before macrotasks (setTimeout). Promises resolve before timers.',
+            links: [
+              { type: 'read', label: 'javascript.info — Microtasks', url: 'https://javascript.info/microtask-queue' },
+              { type: 'video', label: 'Lydia Hallie — Promises & Async/Await', url: 'https://www.youtube.com/watch?v=Xs1EMmBLpn4' },
+            ]
+          },
+          {
+            id: 'mod6-async-await',
+            name: 'async/await Syntax',
+            desc: 'Syntactic sugar for promises. async functions return a promise. await pauses execution until a promise settles.',
+            links: [
+              { type: 'read', label: 'javascript.info — Async/Await', url: 'https://javascript.info/async-await' },
+              { type: 'video', label: 'Fireship — Async/Await in 100 Seconds', url: 'https://www.youtube.com/watch?v=vn3tm0quoqE' },
+            ]
+          },
+          {
+            id: 'mod6-fetch',
+            name: 'Fetch API & HTTP Basics',
+            desc: 'fetch() returns a promise. response.ok checks status. Fetch does NOT reject on 404/500 — only on network errors.',
+            links: [
+              { type: 'read', label: 'MDN — Fetch API', url: 'https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch' },
+            ]
+          },
+          {
+            id: 'mod6-abort',
+            name: 'AbortController & AbortSignal',
+            desc: 'Creates a signal passed to fetch. Calling abort() cancels the request. Essential in React to cancel stale requests.',
+            links: [
+              { type: 'read', label: 'MDN — AbortController', url: 'https://developer.mozilla.org/en-US/docs/Web/API/AbortController' },
+              { type: 'video', label: 'Web Dev Simplified — AbortController', url: 'https://www.youtube.com/watch?v=4mPkigmVsHs' },
+            ]
+          },
+        ]
+      },
+      {
+        id: 'mod7',
+        num: 7,
+        title: 'The "DOM Performance" Master',
+        emoji: '🖼️',
+        exercises: ['08-virtual-list'],
+        concepts: [
+          {
+            id: 'mod7-rendering',
+            name: 'Browser Rendering Pipeline',
+            desc: 'DOM → CSSOM → Render Tree → Layout → Paint → Composite. Adding/removing many nodes forces expensive recalculations.',
+            links: [
+              { type: 'read', label: 'web.dev — How Browsers Work', url: 'https://web.dev/articles/howbrowserswork' },
+              { type: 'video', label: 'Fireship — 10 Browser Concepts', url: 'https://www.youtube.com/watch?v=5-JBHoVlEco' },
+            ]
+          },
+          {
+            id: 'mod7-reflow',
+            name: 'Reflow & Layout Thrashing',
+            desc: 'Reading layout properties after writing forces synchronous reflow. Doing this in a loop is "layout thrashing."',
+            links: [
+              { type: 'read', label: 'web.dev — Avoid Layout Thrashing', url: 'https://web.dev/articles/avoid-large-complex-layouts-and-layout-thrashing' },
+              { type: 'read', label: 'Paul Irish — What Forces Reflow', url: 'https://gist.github.com/paulirish/5d52fb081b3570c81e3a' },
+            ]
+          },
+          {
+            id: 'mod7-position',
+            name: 'CSS position: absolute vs relative',
+            desc: 'absolute removes from flow and positions relative to nearest positioned ancestor. Virtual lists use it for exact pixel offsets.',
+            links: [
+              { type: 'read', label: 'MDN — position', url: 'https://developer.mozilla.org/en-US/docs/Web/CSS/position' },
+              { type: 'video', label: 'Web Dev Simplified — CSS Position', url: 'https://www.youtube.com/watch?v=jx5jmI0UlXU' },
+            ]
+          },
+          {
+            id: 'mod7-scroll',
+            name: 'Scroll Events & scrollTop',
+            desc: 'scroll event fires when scrolled. scrollTop gives pixels from top. Used to calculate visible items.',
+            links: [
+              { type: 'read', label: 'MDN — Element.scrollTop', url: 'https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollTop' },
+            ]
+          },
+          {
+            id: 'mod7-vitals',
+            name: 'Core Web Vitals (LCP, CLS, INP)',
+            desc: 'LCP = load speed. CLS = visual stability. INP = responsiveness. 10,000 DOM nodes destroys all three.',
+            links: [
+              { type: 'read', label: 'web.dev — Core Web Vitals', url: 'https://web.dev/articles/vitals' },
+              { type: 'video', label: 'Google — Core Web Vitals', url: 'https://www.youtube.com/watch?v=AQqFZ5t8uNc' },
+            ]
+          },
+        ]
+      },
+      {
+        id: 'mod8',
+        num: 8,
+        title: 'The "Data Fetching UI" Master',
+        emoji: '🌍',
+        exercises: ['09-autocomplete', '10-infinite-scroll'],
+        concepts: [
+          {
+            id: 'mod8-controlled',
+            name: 'Controlled Components',
+            desc: 'An input whose value is driven by React state (value={query} + onChange). React has full control over form data.',
+            links: [
+              { type: 'read', label: 'React docs — Responding to Input with State', url: 'https://react.dev/learn/reacting-to-input-with-state' },
+              { type: 'video', label: 'Web Dev Simplified — Controlled vs Uncontrolled', url: 'https://www.youtube.com/watch?v=IkMND33x0qQ' },
+            ]
+          },
+          {
+            id: 'mod8-race',
+            name: 'Race Conditions & Stale Closures',
+            desc: 'If rapid API calls resolve out of order, UI shows wrong results. isMounted flag or AbortController prevents stale updates.',
+            links: [
+              { type: 'read', label: 'React docs — Fetching Data in Effects', url: 'https://react.dev/learn/synchronizing-with-effects#fetching-data' },
+              { type: 'video', label: 'Jack Herrington — Race Conditions', url: 'https://www.youtube.com/watch?v=T8TpiGp4xm0' },
+            ]
+          },
+          {
+            id: 'mod8-intersection',
+            name: 'IntersectionObserver API',
+            desc: 'Detects when an element enters/exits the viewport. Far more performant than scroll event listeners.',
+            links: [
+              { type: 'read', label: 'MDN — IntersectionObserver', url: 'https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API' },
+              { type: 'video', label: 'Web Dev Simplified — IntersectionObserver', url: 'https://www.youtube.com/watch?v=2IbRtjez6ag' },
+            ]
+          },
+          {
+            id: 'mod8-pagination',
+            name: 'Pagination: Offset vs Cursor-based',
+            desc: 'Offset (?page=2) is simple but fragile. Cursor-based (?after=abc123) is stable with live data.',
+            links: [
+              { type: 'read', label: 'Slack Engineering — Evolving API Pagination', url: 'https://slack.engineering/evolving-api-pagination-at-slack/' },
+            ]
+          },
+          {
+            id: 'mod8-usecallback',
+            name: 'useCallback & Stable References',
+            desc: 'Returns a memoized callback that only changes when deps change. Prevents unnecessary useEffect re-runs.',
+            links: [
+              { type: 'read', label: 'React docs — useCallback', url: 'https://react.dev/reference/react/useCallback' },
+              { type: 'video', label: 'Jack Herrington — useMemo & useCallback', url: 'https://www.youtube.com/watch?v=MxIPQZ64x0I' },
+            ]
+          },
+          {
+            id: 'mod8-functional-state',
+            name: 'Functional State Updates',
+            desc: 'setState(prev => [...prev, ...new]) safely accesses previous state, avoiding stale closure bugs when appending data.',
+            links: [
+              { type: 'read', label: 'React docs — Updating state based on previous', url: 'https://react.dev/reference/react/useState#updating-state-based-on-the-previous-state' },
+            ]
+          },
+        ]
+      },
+    ];
+
+    // ═══════════════════════════
+    // STATE & PERSISTENCE
+    // ═══════════════════════════
+    const STORAGE_KEY = 'fip-reading-progress';
+    let readingState = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    let testResults = null;
+    let isRunningTests = false;
+
+    function saveReadingState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(readingState));
+      updateProgressBars();
+    }
+
+    function toggleReading(id) {
+      readingState[id] = !readingState[id];
+      saveReadingState();
+      // Update the specific checkbox + label
+      const cb = document.getElementById('cb-' + id);
+      const label = document.getElementById('label-' + id);
+      if (cb) cb.checked = !!readingState[id];
+      if (label) label.classList.toggle('reading-done', !!readingState[id]);
+    }
+
+    // ═══════════════════════════
+    // PROGRESS CALCULATIONS
+    // ═══════════════════════════
+    function getTotalReadingItems() {
+      let total = 0;
+      MODULES.forEach(m => m.concepts.forEach(c => c.links.forEach(() => total++)));
+      return total;
+    }
+
+    function getCompletedReadingItems() {
+      return Object.values(readingState).filter(Boolean).length;
+    }
+
+    function getPassingExercises() {
+      if (!testResults?.exercises) return 0;
+      return Object.values(testResults.exercises).filter(e => e.status === 'pass').length;
+    }
+
+    function updateProgressBars() {
+      const totalReading = getTotalReadingItems();
+      const doneReading = getCompletedReadingItems();
+      document.getElementById('reading-count').textContent = doneReading;
+      document.getElementById('reading-total').textContent = `/ ${totalReading} completed`;
+      document.getElementById('reading-progress').style.width = totalReading ? `${(doneReading / totalReading) * 100}%` : '0%';
+
+      const passing = getPassingExercises();
+      document.getElementById('exercise-count').textContent = testResults ? passing : '—';
+      document.getElementById('exercise-progress').style.width = `${(passing / 10) * 100}%`;
+
+      // Update exercise badges in each module
+      MODULES.forEach(m => {
+        m.exercises.forEach(ex => {
+          const badge = document.getElementById('badge-' + ex);
+          if (!badge) return;
+          if (!testResults?.exercises?.[ex]) {
+            badge.className = 'badge badge-pending';
+            badge.textContent = 'not run';
+            return;
+          }
+          const r = testResults.exercises[ex];
+          if (r.status === 'pass') {
+            badge.className = 'badge badge-pass';
+            badge.textContent = `✓ ${r.passed}/${r.total} passing`;
+          } else {
+            badge.className = 'badge badge-fail';
+            badge.textContent = `✗ ${r.passed}/${r.total} passing`;
+          }
+        });
+      });
+
+      // Update test details
+      MODULES.forEach(m => {
+        m.exercises.forEach(ex => {
+          const detail = document.getElementById('tests-' + ex);
+          if (!detail || !testResults?.exercises?.[ex]) return;
+          const r = testResults.exercises[ex];
+          detail.innerHTML = r.tests.map(t =>
+            `<div class="test-detail ${t.status === 'passed' ? 'test-pass' : 'test-fail'}">${escapeHtml(t.name)}</div>`
+          ).join('');
+        });
+      });
+    }
+
+    // ═══════════════════════════
+    // TEST RUNNER
+    // ═══════════════════════════
+    async function runTests() {
+      if (isRunningTests) return;
+      isRunningTests = true;
+      const btn = document.getElementById('run-tests-btn');
+      btn.innerHTML = '<span class="spinner"></span> Running...';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/test-results');
+        testResults = await res.json();
+      } catch (err) {
+        console.error('Failed to fetch test results:', err);
+      }
+
+      btn.innerHTML = '▶ Run Tests';
+      btn.disabled = false;
+      isRunningTests = false;
+      updateProgressBars();
+    }
+
+    // ═══════════════════════════
+    // RENDERING
+    // ═══════════════════════════
+    function escapeHtml(str) {
+      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function renderModules() {
+      const container = document.getElementById('modules-container');
+      container.innerHTML = MODULES.map(mod => {
+        const exerciseBlocks = mod.exercises.map(ex => `
+          <div class="flex items-center gap-2 mb-2">
+            <a href="/exercise/${ex}" class="text-base font-mono text-blue-400 hover:text-blue-300 underline underline-offset-2">${ex}</a>
+            <span id="badge-${ex}" class="badge badge-pending">not run</span>
+          </div>
+          <div id="tests-${ex}" class="ml-4 mb-3 space-y-0.5"></div>
+        `).join('');
+
+        const conceptBlocks = mod.concepts.map(c => {
+          const linkItems = c.links.map(link => {
+            const linkId = c.id + '-' + link.url.slice(-20).replace(/[^a-z0-9]/gi, '');
+            const icon = link.type === 'video' ? '🎥' : '📖';
+            const checked = readingState[linkId] ? 'checked' : '';
+            const doneClass = readingState[linkId] ? 'reading-done' : '';
+            return `
+              <div class="flex items-center gap-2 py-0.5">
+                <input type="checkbox" class="checkbox-custom" id="cb-${linkId}" ${checked}
+                       onchange="toggleReading('${linkId}')" />
+                <span id="label-${linkId}" class="text-base ${doneClass}">
+                  ${icon}
+                  <a href="${link.url}" target="_blank" rel="noopener" class="link-icon underline underline-offset-2 decoration-muted-foreground/40 hover:decoration-foreground">
+                    ${escapeHtml(link.label)}
+                  </a>
+                </span>
+              </div>
+            `;
+          }).join('');
+
+          return `
+            <div class="mb-4">
+              <h4 class="text-base font-semibold text-foreground">${escapeHtml(c.name)}</h4>
+              <p class="text-sm text-muted-foreground mt-0.5 mb-1.5 leading-relaxed">${escapeHtml(c.desc)}</p>
+              ${linkItems}
+            </div>
+          `;
+        }).join('');
+
+        return `
+          <div class="card">
+            <button class="accordion-trigger w-full flex items-center justify-between p-4 rounded-t-xl text-left"
+                    onclick="toggleModule('${mod.id}')">
+              <div class="flex items-center gap-3">
+                <span class="text-xl">${mod.emoji}</span>
+                <div>
+                  <span class="text-sm text-muted-foreground">Module ${mod.num}</span>
+                  <h3 class="text-lg font-semibold -mt-0.5">${escapeHtml(mod.title)}</h3>
+                </div>
+              </div>
+              <svg id="chevron-${mod.id}" class="w-5 h-5 text-muted-foreground transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </button>
+            <div id="content-${mod.id}" class="accordion-content">
+              <div class="px-4 pb-4 pt-2 border-t border-border">
+                <div class="mb-4">
+                  <h4 class="text-sm uppercase tracking-wider text-muted-foreground mb-2">Exercises</h4>
+                  ${exerciseBlocks}
+                </div>
+                <div>
+                  <h4 class="text-sm uppercase tracking-wider text-muted-foreground mb-3">📚 Prerequisites & Resources</h4>
+                  ${conceptBlocks}
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function toggleModule(id) {
+      const content = document.getElementById('content-' + id);
+      const chevron = document.getElementById('chevron-' + id);
+      content.classList.toggle('open');
+      chevron.style.transform = content.classList.contains('open') ? 'rotate(180deg)' : '';
+    }
+
+    // ═══════════════════════════
+    // INIT
+    // ═══════════════════════════
+    renderModules();
+    updateProgressBars();
+  </script>
+</body>
+</html>
