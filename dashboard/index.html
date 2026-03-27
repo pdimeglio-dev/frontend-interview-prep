@@ -69,9 +69,16 @@
 <body class="min-h-screen p-6 max-w-4xl mx-auto">
 
   <!-- Header -->
-  <header class="mb-8">
-    <h1 class="text-4xl font-bold tracking-tight mb-1">🎓 Frontend Interview Prep</h1>
-    <p class="text-muted-foreground text-base">Master the concepts. Pass the tests. Ace the interview.</p>
+  <header class="mb-8 flex items-start justify-between">
+    <div>
+      <h1 class="text-4xl font-bold tracking-tight mb-1">🎓 Frontend Interview Prep</h1>
+      <p class="text-muted-foreground text-base">Master the concepts. Pass the tests. Ace the interview.</p>
+    </div>
+    <a href="http://localhost:3000/docs" target="_blank" rel="noopener"
+       class="flex items-center gap-2 px-4 py-2.5 rounded-md text-base font-medium transition-opacity hover:opacity-90"
+       style="background: hsl(217 91% 25%); color: hsl(217 91% 85%); border: 1px solid hsl(217 91% 35%); text-decoration: none; margin-top: 0.5rem;">
+      📝 Study Notes
+    </a>
   </header>
 
   <!-- Overall Progress Cards -->
@@ -118,6 +125,7 @@
           {
             id: 'mod1-closures',
             name: 'Closures',
+            notesSlug: 'module-1/closures',
             desc: 'An inner function retains access to its outer function\'s variables even after the outer function has returned. This is the mechanism that lets the debounce function "remember" the timeoutId.',
             links: [
               { type: 'read', label: 'javascript.info — Closures', url: 'https://javascript.info/closure' },
@@ -583,6 +591,57 @@
     ];
 
     // ═══════════════════════════
+    // NOTES SLUG MAP — concept id → Docusaurus docs path
+    // ═══════════════════════════
+    const NOTES_MAP = {
+      'mod1-closures': 'module-1/closures',
+      'mod1-this': 'module-1/this-keyword',
+      'mod1-timers': 'module-1/settimeout-cleartimeout',
+      'mod1-eventloop': 'module-1/event-loop',
+      'mod1-rest-spread': 'module-1/rest-spread',
+      'mod1-useeffect': 'module-1/useeffect-cleanup',
+      'mod2-closures-cache': 'module-2/closures-caching',
+      'mod2-map-weakmap': 'module-2/map-vs-weakmap',
+      'mod2-referential': 'module-2/referential-equality',
+      'mod2-hof': 'module-2/higher-order-functions',
+      'mod2-useref': 'module-2/useref-vs-usestate',
+      'mod3-observer': 'module-3/observer-pattern',
+      'mod3-classes': 'module-3/javascript-classes',
+      'mod3-map-set': 'module-3/map-and-set',
+      'mod3-bubbling': 'module-3/event-bubbling',
+      'mod3-memory': 'module-3/memory-leaks',
+      'mod4-primitive-ref': 'module-4/primitive-vs-reference',
+      'mod4-shallow-deep': 'module-4/shallow-vs-deep-copy',
+      'mod4-recursion': 'module-4/recursion',
+      'mod4-typeof': 'module-4/typeof-instanceof',
+      'mod4-weakmap': 'module-4/weakmap-circular-refs',
+      'mod4-json-limits': 'module-4/weakmap-circular-refs',
+      'mod5-hof': 'module-5/higher-order-functions',
+      'mod5-accumulator': 'module-5/accumulator-pattern',
+      'mod5-prototype': 'module-5/prototype-chain',
+      'mod5-arguments': 'module-5/arguments-object',
+      'mod5-arity': 'module-5/function-arity',
+      'mod5-currying': 'module-5/currying',
+      'mod6-promises': 'module-6/promises',
+      'mod6-resolve': 'module-6/promise-resolve',
+      'mod6-microtask': 'module-6/microtask-vs-macrotask',
+      'mod6-async-await': 'module-6/async-await',
+      'mod6-fetch': 'module-6/fetch-api',
+      'mod6-abort': 'module-6/abort-controller',
+      'mod7-rendering': 'module-7/browser-rendering',
+      'mod7-reflow': 'module-7/reflow-layout-thrashing',
+      'mod7-position': 'module-7/css-position',
+      'mod7-scroll': 'module-7/scroll-events',
+      'mod7-vitals': 'module-7/core-web-vitals',
+      'mod8-controlled': 'module-8/controlled-components',
+      'mod8-race': 'module-8/race-conditions',
+      'mod8-intersection': 'module-8/intersection-observer',
+      'mod8-pagination': 'module-8/pagination',
+      'mod8-usecallback': 'module-8/usecallback',
+      'mod8-functional-state': 'module-8/functional-state-updates',
+    };
+
+    // ═══════════════════════════
     // STATE & PERSISTENCE
     // ═══════════════════════════
     const STORAGE_KEY = 'fip-reading-progress';
@@ -729,9 +788,14 @@
             `;
           }).join('');
 
+          const noteSlug = NOTES_MAP[c.id];
+          const noteLink = noteSlug
+            ? ` <a href="http://localhost:3000/docs/${noteSlug}" target="_blank" rel="noopener" title="Open study notes" style="font-size:0.8rem;text-decoration:none;opacity:0.5;transition:opacity 0.15s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">📝</a>`
+            : '';
+
           return `
             <div class="mb-4">
-              <h4 class="text-base font-semibold text-foreground">${escapeHtml(c.name)}</h4>
+              <h4 class="text-base font-semibold text-foreground">${escapeHtml(c.name)}${noteLink}</h4>
               <p class="text-sm text-muted-foreground mt-0.5 mb-1.5 leading-relaxed">${escapeHtml(c.desc)}</p>
               ${linkItems}
             </div>
