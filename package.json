@@ -4,6 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "predev": "lsof -ti :3737 -ti :3000 | xargs kill -9 2>/dev/null || true",
+    "dev": "concurrently -n dashboard,notes -c blue,magenta \"npm run dashboard\" \"npm run notes\"",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
@@ -24,6 +26,7 @@
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.3.0",
     "@vitest/ui": "^4.1.2",
+    "concurrently": "^9.2.1",
     "jsdom": "^25.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
