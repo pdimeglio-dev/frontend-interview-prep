@@ -11,7 +11,12 @@ const config = {
   baseUrl: "/",
 
   onBrokenLinks: "warn",
-  onBrokenMarkdownLinks: "warn",
+
+  markdown: {
+    hooks: {
+      onBrokenMarkdownLinks: "warn",
+    },
+  },
 
   i18n: {
     defaultLocale: "en",
@@ -45,6 +50,11 @@ const config = {
       },
       navbar: {
         title: "📝 Study Notes",
+        logo: {
+          alt: "Study Notes",
+          src: "img/favicon.ico",
+          href: "/docs/",
+        },
         items: [
           {
             type: "docSidebar",
