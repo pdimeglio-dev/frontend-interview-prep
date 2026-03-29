@@ -14,7 +14,7 @@ async function getExerciseFiles(name) {
   const dir = join(SRC, name);
   const files = await readdir(dir);
   const readme = files.find(f => f === 'README.md');
-  const source = files.find(f => /^(?:index|[A-Z]\w+)\.(ts|tsx)$/.test(f) && !f.includes('.test.') && !f.includes('.stories.'));
+  const source = files.find(f => /^(?:index|[A-Z]\w+)\.(ts|tsx|js|jsx)$/.test(f) && !f.includes('.test.') && !f.includes('.stories.'));
   const test = files.find(f => f.includes('.test.'));
   const stories = files.find(f => f.includes('.stories.'));
   return { dir, readme, source, test, stories, allFiles: files };
