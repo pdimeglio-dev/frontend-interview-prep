@@ -1,6 +1,6 @@
-# Debounce
+# Debounce (Basic)
 
-> **Module 1** · BFE.dev: [#6 Debounce](https://bigfrontend.dev/problem/implement-basic-debounce) · [#7 Debounce with leading & trailing](https://bigfrontend.dev/problem/implement-debounce-with-leading-and-trailing-option)
+> **Module 1** · BFE.dev: [#6 Implement basic debounce](https://bigfrontend.dev/problem/implement-basic-debounce)
 
 ## Problem
 
@@ -11,10 +11,7 @@ Implement a `debounce` function that delays invoking `func` until after `wait` m
 1. Return a new function that delays invoking `func` by `wait` ms after the last call
 2. If called again before `wait` expires, the previous timer resets
 3. Preserve `this` context and forward all arguments to the original function
-4. Support an `options` object:
-   - `leading` (default `false`) — invoke on the **leading** edge (immediately on first call)
-   - `trailing` (default `true`) — invoke on the **trailing** edge (after `wait` ms of silence)
-5. Attach a `.cancel()` method to the returned function that cancels any pending invocation
+4. Use the **last call's arguments** when the timer finally fires
 
 ## Examples
 
@@ -22,14 +19,15 @@ Implement a `debounce` function that delays invoking `func` until after `wait` m
 const log = debounce(console.log, 300);
 log("a"); // timer starts
 log("b"); // timer resets
-log("c"); // timer resets → after 300ms, logs "c"
-
-const immediate = debounce(console.log, 300, { leading: true, trailing: false });
-immediate("x"); // logs "x" immediately
-immediate("y"); // ignored (within 300ms window)
+log("c"); // timer resets → after 300ms of silence, logs "c"
 ```
 
 ## Constraints
 
 - Do NOT use lodash or any external library
 - Your implementation should pass all tests in `index.test.ts`
+
+## Next Step
+
+Once you've solved this, try the advanced version with leading/trailing options:
+→ [01b-debounce-leading-trailing](/exercise/01b-debounce-leading-trailing)
