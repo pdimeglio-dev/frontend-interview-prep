@@ -10,4 +10,14 @@
  */
 export function debounce(func, wait) {
   // your code here
+  let timeOutId = undefined;
+
+  return function (...args) {
+    let context = this;
+    clearTimeout(timeOutId);
+
+    timeOutId = setTimeout(() => {
+      func.apply(context, [...args]);
+    }, wait);
+  };
 }

@@ -13,6 +13,7 @@ const sidebars = {
         "module-1/event-loop",
         "module-1/rest-spread",
         "module-1/useeffect-cleanup",
+        "module-1/debounce-leading-trailing",
       ],
     },
     {
