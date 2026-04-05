@@ -87,7 +87,7 @@
       <div class="text-sm text-muted-foreground uppercase tracking-wider mb-1">Exercises</div>
       <div class="flex items-center gap-3">
         <span id="exercise-count" class="text-3xl font-bold">—</span>
-        <span class="text-muted-foreground text-base">/ 10 passing</span>
+        <span class="text-muted-foreground text-base">/ 12 passing</span>
       </div>
       <div class="progress-bar mt-2"><div id="exercise-progress" class="progress-fill progress-fill-green" style="width:0%"></div></div>
     </div>
@@ -120,7 +120,7 @@
         num: 1,
         title: 'The "Timer & Async" Master',
         emoji: '⏱️',
-        exercises: ['01-debounce', '01b-debounce-leading-trailing'],
+        exercises: ['01-debounce', '01b-debounce-leading-trailing', '01c-use-debounce'],
         concepts: [
           {
             id: 'mod1-closures',
@@ -178,6 +178,16 @@
             links: [
               { type: 'read', label: 'React docs — Synchronizing with Effects', url: 'https://react.dev/learn/synchronizing-with-effects' },
               { type: 'video', label: 'Jack Herrington — Mastering useEffect', url: 'https://www.youtube.com/watch?v=dH6i3GurZW8' },
+            ]
+          },
+          {
+            id: 'mod1-custom-hooks',
+            name: 'Custom Hooks',
+            desc: 'A custom hook is just a regular function starting with "use" that calls other hooks inside. No magic — it\'s the React way to extract and reuse stateful logic.',
+            links: [
+              { type: 'read', label: 'React docs — Reusing Logic with Custom Hooks', url: 'https://react.dev/learn/reusing-logic-with-custom-hooks' },
+              { type: 'read', label: 'React docs — Rules of Hooks', url: 'https://react.dev/reference/rules/rules-of-hooks' },
+              { type: 'video', label: 'Web Dev Simplified — Custom Hooks', url: 'https://www.youtube.com/watch?v=6ThXsUwLWvc' },
             ]
           },
         ]
@@ -601,6 +611,7 @@
       'mod1-eventloop': 'module-1/event-loop',
       'mod1-rest-spread': 'module-1/rest-spread',
       'mod1-useeffect': 'module-1/useeffect-cleanup',
+      'mod1-custom-hooks': 'module-1/custom-hooks',
       'mod2-closures-cache': 'module-2/closures-caching',
       'mod2-map-weakmap': 'module-2/map-vs-weakmap',
       'mod2-referential': 'module-2/referential-equality',
@@ -692,7 +703,7 @@
 
       const passing = getPassingExercises();
       document.getElementById('exercise-count').textContent = testResults ? passing : '—';
-      document.getElementById('exercise-progress').style.width = `${(passing / 10) * 100}%`;
+      document.getElementById('exercise-progress').style.width = `${(passing / 12) * 100}%`;
 
       // Update exercise badges in each module
       MODULES.forEach(m => {
