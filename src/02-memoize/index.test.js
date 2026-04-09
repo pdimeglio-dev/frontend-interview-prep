@@ -3,7 +3,7 @@ import { memoize } from "./index";
 
 describe("memoize", () => {
   it("should return cached result for same first argument", () => {
-    const fn = vi.fn((a: number) => a * 2);
+    const fn = vi.fn((a) => a * 2);
     const memoized = memoize(fn);
 
     expect(memoized(2)).toBe(4);
@@ -12,7 +12,7 @@ describe("memoize", () => {
   });
 
   it("should recompute for different arguments", () => {
-    const fn = vi.fn((a: number) => a * 2);
+    const fn = vi.fn((a) => a * 2);
     const memoized = memoize(fn);
 
     expect(memoized(2)).toBe(4);
@@ -21,7 +21,7 @@ describe("memoize", () => {
   });
 
   it("should use first argument as default cache key", () => {
-    const fn = vi.fn((a: number, b: number) => a + b);
+    const fn = vi.fn((a, b) => a + b);
     const memoized = memoize(fn);
 
     expect(memoized(1, 2)).toBe(3);
@@ -30,7 +30,7 @@ describe("memoize", () => {
   });
 
   it("should use resolver function for custom cache key", () => {
-    const fn = vi.fn((a: number, b: number) => a + b);
+    const fn = vi.fn((a, b) => a + b);
     const memoized = memoize(fn, (a, b) => `${a}-${b}`);
 
     expect(memoized(1, 2)).toBe(3);
@@ -42,7 +42,7 @@ describe("memoize", () => {
   it("should preserve this context", () => {
     const obj = {
       multiplier: 3,
-      compute: memoize(function (this: any, n: number) {
+      compute: memoize(function (n) {
         return n * this.multiplier;
       }),
     };
@@ -69,7 +69,7 @@ describe("memoize", () => {
   });
 
   it("should handle object keys with resolver", () => {
-    const fn = vi.fn((obj: { id: number }) => obj.id * 2);
+    const fn = vi.fn((obj) => obj.id * 2);
     const memoized = memoize(fn, (obj) => obj.id);
 
     expect(memoized({ id: 1 })).toBe(2);
