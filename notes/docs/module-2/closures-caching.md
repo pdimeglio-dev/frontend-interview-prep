@@ -212,18 +212,53 @@ TypeScript fills in `T = (a: number) => number` automatically. Now it knows `mem
 
 #### Step 4: Constrain T — "it must be a function"
 
-Right now `T` could be anything (a string, a number...). We need to say "T must be some kind of function":
+Right now `T` could be **anything** — a string, a number, an object. TypeScript has no idea it's supposed to be a function:
 
 ```typescript
-function memoize<T extends (...args: any[]) => any>(func: T): T {
-  // ...
+// Without extends:
+function memoize<T>(func: T): T { ... }
+
+memoize(42);          // T = number    ← TypeScript allows this! 😱
+memoize("hello");     // T = string    ← Also allowed!
+memoize({ a: 1 });    // T = object    ← Also allowed!
+```
+
+And when you try to **use** `func` as a function inside the body, TypeScript won't let you:
+
+```typescript
+function memoize<T>(func: T): T {
+  return function (...args) {
+    func.apply(this, args);
+    // ❌ ERROR: Property 'apply' does not exist on type 'T'
+    //    T could be a number! Numbers don't have .apply()
+  };
 }
 ```
 
+> 🔍 **`extends` is a filter.** It tells TypeScript: "only allow `T` if it passes this check." Think of it like a bouncer at the door — only functions get in.
+
+```typescript
+function memoize<T extends (...args: any[]) => any>(func: T): T {
+  // Now TypeScript KNOWS:
+  // ✅ func is callable (it's a function)
+  // ✅ func has .apply(), .call(), .bind()
+  // ✅ Parameters<T> and ReturnType<T> work (T is guaranteed to be a function)
+
+  return function (...args) {
+    func.apply(this, args);  // ✅ No error — T is definitely a function
+  };
+}
+
+memoize(42);         // ❌ ERROR: number doesn't extend (...args: any[]) => any
+memoize((x) => x);  // ✅ This IS a function — allowed through the filter
+```
+
 Breaking down `T extends (...args: any[]) => any`:
-- `extends` = "T must be at least this" (a constraint)
+- `extends` = "T must pass this filter" (a constraint)
 - `(...args: any[]) => any` = "any function that takes any arguments and returns anything"
-- So `T` can be `(a: number) => number` or `(x: string, y: boolean) => void` — any function shape
+- So `T` can be `(a: number) => number` or `(x: string, y: boolean) => void` — any function shape, but it MUST be a function
+
+> 🧠 **The progression:** `<T>` = "T can be anything" → `<T extends Function>` = "T must be a function" → `<T extends (...args: any[]) => any>` = "T must be a function, spelled out so TS can extract args and return type with `Parameters<T>` and `ReturnType<T>`"
 
 #### Step 5: Extract the argument types with `Parameters<T>`
 
