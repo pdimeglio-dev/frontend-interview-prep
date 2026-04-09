@@ -87,7 +87,7 @@
       <div class="text-sm text-muted-foreground uppercase tracking-wider mb-1">Exercises</div>
       <div class="flex items-center gap-3">
         <span id="exercise-count" class="text-3xl font-bold">—</span>
-        <span class="text-muted-foreground text-base">/ 12 passing</span>
+        <span class="text-muted-foreground text-base">/ 13 passing</span>
       </div>
       <div class="progress-bar mt-2"><div id="exercise-progress" class="progress-fill progress-fill-green" style="width:0%"></div></div>
     </div>
@@ -197,7 +197,7 @@
         num: 2,
         title: 'The "Closure & Cache" Master',
         emoji: '🧠',
-        exercises: ['02-memoize'],
+        exercises: ['02-memoize', '02b-use-previous'],
         concepts: [
           {
             id: 'mod2-closures-cache',
@@ -703,7 +703,7 @@
 
       const passing = getPassingExercises();
       document.getElementById('exercise-count').textContent = testResults ? passing : '—';
-      document.getElementById('exercise-progress').style.width = `${(passing / 12) * 100}%`;
+      document.getElementById('exercise-progress').style.width = `${(passing / 13) * 100}%`;
 
       // Update exercise badges in each module
       MODULES.forEach(m => {
