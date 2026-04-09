@@ -218,6 +218,157 @@ const cacheRef = useRef(new Map());
 
 ---
 
+---
+
+### 🏋️ Exercise Walkthrough: Implementing usePrevious
+
+Here's the final solution — only 5 lines of real code:
+
+```javascript
+import { useRef, useEffect } from "react";
+
+export function usePrevious(value) {
+  const prev = useRef(undefined);  // ① const, not let!
+
+  useEffect(() => {
+    prev.current = value;          // ② .current, not prev itself!
+  }, [value]);
+
+  return prev.current;             // ③ returns the OLD value (effect hasn't run yet)
+}
+```
+
+#### How it works: the effect timing trick
+
+The whole hook relies on **when `useEffect` runs** — AFTER the render is painted to the screen:
+
+```
+Render 1 (value = 0):
+  1. prev.current is still undefined    ← useRef keeps the old value
+  2. return prev.current → undefined    ← caller gets undefined (no previous)
+  3. useEffect fires → prev.current = 0 ← NOW it updates (too late for this render)
+
+Render 2 (value = 1):
+  1. prev.current is still 0            ← last effect set it to 0
+  2. return prev.current → 0            ← caller gets 0 (the previous value!)
+  3. useEffect fires → prev.current = 1 ← updates for next time
+
+Render 3 (value = 2):
+  1. prev.current is still 1
+  2. return prev.current → 1            ← caller gets 1
+  3. useEffect fires → prev.current = 2
+```
+
+The "trick" is that `return prev.current` happens DURING render, but `prev.current = value` happens AFTER render (in the effect). So the returned value is always "one render behind."
+
+---
+
+#### ⚠️ My mistakes and what I learned
+
+##### Mistake 1: `let prev = useRef(...)` instead of `const prev = useRef(...)`
+
+```javascript
+// ❌ What I wrote:
+let prev = useRef(undefined);
+
+// ✅ What it should be:
+const prev = useRef(undefined);
+```
+
+**Why it matters:** Using `let` allows you to accidentally reassign the variable. A ref should NEVER be reassigned — only its `.current` property should change. Using `const` makes this impossible:
+
+```javascript
+const prev = useRef(undefined);
+prev = value;         // ❌ TypeError: Assignment to constant variable
+prev.current = value; // ✅ This is the only way — exactly what we want
+```
+
+> 🧠 **Rule:** Always use `const` for refs. If you can't accidentally reassign, you can't have this bug.
+
+##### Mistake 2: `prev = value` instead of `prev.current = value`
+
+This was the actual bug. Let's trace what happens with each version:
+
+```javascript
+// ❌ What I wrote:
+useEffect(() => {
+  prev = value;  // reassigns the LOCAL VARIABLE
+}, [value]);
+
+// ✅ What it should be:
+useEffect(() => {
+  prev.current = value;  // mutates the ref OBJECT's property
+}, [value]);
+```
+
+**Why `prev = value` doesn't work:**
+
+```
+Render 1:
+  useRef creates:  ref object = { current: undefined }
+  prev variable → points to { current: undefined }
+  return prev.current → undefined ✅
+
+  useEffect fires:
+    prev = 0          ← prev now points to the NUMBER 0
+                         the ref object { current: undefined } is ABANDONED
+                         but React still holds the ORIGINAL ref object!
+
+Render 2:
+  React returns the SAME ref object from useRef: { current: undefined }
+  prev variable → points to { current: undefined } again (React ignores our reassignment)
+  return prev.current → undefined ❌ STILL undefined! The bug!
+```
+
+**Why `prev.current = value` works:**
+
+```
+Render 1:
+  useRef creates:  ref object = { current: undefined }
+  prev variable → points to { current: undefined }
+  return prev.current → undefined ✅
+
+  useEffect fires:
+    prev.current = 0  ← MUTATES the object, now it's { current: 0 }
+                         prev still points to the SAME object
+                         React also points to the SAME object!
+
+Render 2:
+  React returns the SAME ref object: { current: 0 }
+  prev variable → points to { current: 0 }
+  return prev.current → 0 ✅ Correct! It's the previous value!
+```
+
+> 🧠 **The key insight:** `prev = value` replaces **what the variable points to**. `prev.current = value` changes **what's inside the object the variable points to**. React holds a reference to the object, not the variable — so only mutations to the object persist.
+
+This is the same concept as [referential equality](./referential-equality):
+```javascript
+const obj = { current: "old" };
+const sameObj = obj;           // both point to the SAME object
+
+obj.current = "new";           // mutates the shared object
+console.log(sameObj.current);  // "new" — both see the change
+
+// But if you REPLACE obj:
+let obj2 = { current: "old" };
+let copy = obj2;
+obj2 = "replaced";             // obj2 now points to a string
+console.log(copy.current);     // "old" — copy still has the original object
+```
+
+---
+
+#### 🧩 Concepts used in this exercise
+
+| Concept | Where it appears | Notes link |
+|---|---|---|
+| **useRef** | Persists previous value across renders | This page |
+| **useEffect timing** | Runs AFTER render → value is "one behind" | Module 1: [useEffect & Cleanup](/docs/module-1/useeffect-cleanup) |
+| **Referential equality** | `prev = value` vs `prev.current = value` | [Referential Equality](./referential-equality) |
+| **const vs let** | Prevents accidental variable reassignment | — |
+
+---
+
 ## Key Takeaways
 
 - **`useRef` returns `{ current: value }`** — the same object on every render, persists across the component's lifetime
@@ -241,6 +392,7 @@ const cacheRef = useRef(new Map());
 
 ## Related Exercises
 
+- 🏋️ [02b-use-previous](http://localhost:3737/exercise/02b-use-previous) — The usePrevious hook uses useRef to persist the previous value silently
 - 🏋️ [02-memoize](http://localhost:3737/exercise/02-memoize) — Our memoize function uses a Map cache; in React you'd persist it with useRef
 - 🏋️ [01-debounce](http://localhost:3737/exercise/01-debounce) — Debounce uses a timer ID; in React you'd store it in useRef
 - 🏋️ [08-virtual-list](http://localhost:3737/exercise/08-virtual-list) — useRef can hold scroll position without triggering re-renders
