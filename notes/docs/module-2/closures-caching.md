@@ -165,6 +165,148 @@ The order matters: compute first, then cache. If `func` throws an error, we don'
 
 ---
 
+### 🔷 TypeScript Version: Building the Types Step by Step
+
+The TypeScript version looks scary at first, but it's just the JS version with **labels that describe what goes in and comes out**. Let's build it incrementally.
+
+#### Step 1: Start with no types (our JS version)
+
+```javascript
+function memoize(func, resolver) {
+  const cache = new Map();
+  const memoizedFunction = function (...args) {
+    const key = resolver ? resolver(...args) : args[0];
+    if (cache.has(key)) return cache.get(key);
+    const result = func.apply(this, args);
+    cache.set(key, result);
+    return result;
+  };
+  return memoizedFunction;
+}
+```
+
+#### Step 2: What types do we actually need to figure out?
+
+There are only **3 questions** TypeScript needs answered:
+
+1. **What type is `func`?** → Some function. We don't know which one — the caller decides.
+2. **What type are `args`?** → Whatever `func` accepts.
+3. **What does the memoized function return?** → Whatever `func` returns.
+
+#### Step 3: The generic `T` — "I don't know the exact function yet"
+
+```typescript
+function memoize<T>(func: T): T {
+  // ...
+}
+```
+
+`<T>` means: "The caller will tell me what type `T` is when they use `memoize`." When someone writes:
+
+```typescript
+const fn = (a: number) => a * 2;  // fn is (a: number) => number
+const memoized = memoize(fn);      // T becomes (a: number) => number
+```
+
+TypeScript fills in `T = (a: number) => number` automatically. Now it knows `memoized` has the same signature as `fn`.
+
+#### Step 4: Constrain T — "it must be a function"
+
+Right now `T` could be anything (a string, a number...). We need to say "T must be some kind of function":
+
+```typescript
+function memoize<T extends (...args: any[]) => any>(func: T): T {
+  // ...
+}
+```
+
+Breaking down `T extends (...args: any[]) => any`:
+- `extends` = "T must be at least this" (a constraint)
+- `(...args: any[]) => any` = "any function that takes any arguments and returns anything"
+- So `T` can be `(a: number) => number` or `(x: string, y: boolean) => void` — any function shape
+
+#### Step 5: Extract the argument types with `Parameters<T>`
+
+TypeScript has a built-in utility called `Parameters<T>` that extracts the argument types from a function type:
+
+```typescript
+type T = (a: number, b: string) => boolean;
+type Args = Parameters<T>;  // [number, string]
+```
+
+We use this for `...args` so TypeScript knows what arguments the memoized function accepts:
+
+```typescript
+const memoizedFunction = function (...args: Parameters<T>) {
+  // args is typed as whatever T's arguments are
+};
+```
+
+#### Step 6: Extract the return type with `ReturnType<T>`
+
+Similarly, `ReturnType<T>` extracts what the function returns:
+
+```typescript
+type T = (a: number) => string;
+type R = ReturnType<T>;  // string
+```
+
+#### Step 7: Type the resolver
+
+The resolver receives the **same arguments** as `func` and returns **any** value (the cache key):
+
+```typescript
+resolver?: (...args: Parameters<T>) => any
+//  ?  = optional parameter
+//  (...args: Parameters<T>) = same args as func
+//  => any = can return anything (string, number, etc.) as the key
+```
+
+#### Step 8: The complete TypeScript version
+
+```typescript
+function memoize<T extends (...args: any[]) => any>(
+  func: T,
+  resolver?: (...args: Parameters<T>) => any
+): T {
+  const cache = new Map();
+
+  const memoizedFunction = function (
+    this: ThisParameterType<T>,   // preserves `this` type from func
+    ...args: Parameters<T>        // same argument types as func
+  ): ReturnType<T> {              // same return type as func
+    const key = resolver ? resolver(...args) : args[0];
+    if (cache.has(key)) return cache.get(key);
+    const result = func.apply(this, args) as ReturnType<T>;
+    cache.set(key, result);
+    return result;
+  };
+
+  return memoizedFunction as unknown as T;
+}
+```
+
+#### Why `as ReturnType<T>` and `as unknown as T`?
+
+TypeScript can't always figure out that `func.apply(this, args)` returns the same type as `func(args)`. The `as` keyword tells TypeScript "trust me, I know the type":
+
+- `func.apply(this, args) as ReturnType<T>` — "the result of apply is the function's return type"
+- `return memoizedFunction as unknown as T` — "the memoized function has the same type as the original"
+
+We need `as unknown as T` (double cast) because TypeScript sees `memoizedFunction` as a slightly different shape than `T`, even though it behaves identically. The `unknown` is a safe "bridge" between the two types.
+
+#### 🗺️ Cheat Sheet: TypeScript Utilities for Functions
+
+| Utility | What it does | Example |
+|---|---|---|
+| `Parameters<T>` | Extracts argument types as a tuple | `Parameters<(a: number, b: string) => void>` = `[number, string]` |
+| `ReturnType<T>` | Extracts the return type | `ReturnType<(a: number) => string>` = `string` |
+| `ThisParameterType<T>` | Extracts the `this` type | `ThisParameterType<(this: Obj) => void>` = `Obj` |
+| `T extends X` | Constrains a generic | `T extends Function` = "T must be a function" |
+| `as` | Type assertion ("trust me") | `value as string` = "I know this is a string" |
+
+---
+
 ### ⚠️ Gotchas I learned
 
 1. **Arrow function for the returned function = broken `this`** — always use `function` keyword when you need dynamic `this`
